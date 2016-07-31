@@ -10,10 +10,10 @@ namespace PokemonGo.RocketAPI.Helpers
         {
             var nearbyCellIds = new List<S2CellId>();
 
-            var cellId = S2CellId.FromLatLng(S2LatLng.FromDegrees(latitude, longitude)).ParentForLevel(15);//.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent;
-            
+            var cellId = S2CellId.FromLatLng(S2LatLng.FromDegrees(latitude, longitude)).ParentForLevel(15);
+
             nearbyCellIds.Add(cellId);
-            for (int i = 0; i < 10; i++)
+            for (var i = 0; i < 10; i++)
             {
                 nearbyCellIds.Add(GetPrevious(cellId, i));
                 nearbyCellIds.Add(GetNext(cellId, i));
@@ -41,6 +41,5 @@ namespace PokemonGo.RocketAPI.Helpers
 
             return GetNext(cellId.Next, depth);
         }
-
     }
 }

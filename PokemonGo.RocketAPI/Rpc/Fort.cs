@@ -70,6 +70,7 @@ namespace PokemonGo.RocketAPI.Rpc
                 AttackActions = { battleActions }
             };
 
+        
             message.AttackActions.Add(battleActions);
 
             return await PostProtoPayload<Request, AttackGymResponse>(RequestType.AttackGym, message);

@@ -23,39 +23,39 @@ namespace PokemonGo.RocketAPI.Rpc
         {
         }
 
-        //public async Task DoGoogleLogin(string username,string password)
-        //{
-        //    _client.AuthType = AuthType.Google;
+        public async Task DoGoogleLogin(string username, string password)
+        {
+            _client.AuthType = AuthType.Google;
 
-        //    _client.AuthToken = GoogleLoginGPSOAuth.DoLogin(username, password);
-        //    await SetServer();
+            _client.AuthToken = GoogleLoginGPSOAuth.DoLogin(username, password);
+            await SetServer();
 
-        //    /*
-        //    * This is our old authentication method
-        //    * Keeping this around in case we might need it later on
-        //    *
-        //    GoogleLogin.TokenResponseModel tokenResponse = null;
-        //    if (_client.Settings.GoogleRefreshToken != string.Empty)
-        //    {
-        //        tokenResponse = await GoogleLogin.GetAccessToken(_client.Settings.GoogleRefreshToken);
-        //        _client.AuthToken = tokenResponse?.id_token;
-        //    }
+            /*
+            * This is our old authentication method
+            * Keeping this around in case we might need it later on
+            *
+            GoogleLogin.TokenResponseModel tokenResponse = null;
+            if (_client.Settings.GoogleRefreshToken != string.Empty)
+            {
+                tokenResponse = await GoogleLogin.GetAccessToken(_client.Settings.GoogleRefreshToken);
+                _client.AuthToken = tokenResponse?.id_token;
+            }
 
-        //    if (_client.AuthToken == null)
-        //    {
-        //        var deviceCode = await GoogleLogin.GetDeviceCode();
-        //        if(deviceCode?.user_code == null || deviceCode?.verification_url == null)
-        //            throw new GoogleOfflineException();
+            if (_client.AuthToken == null)
+            {
+                var deviceCode = await GoogleLogin.GetDeviceCode();
+                if(deviceCode?.user_code == null || deviceCode?.verification_url == null)
+                    throw new GoogleOfflineException();
 
-        //        GoogleDeviceCodeEvent?.Invoke(deviceCode.user_code, deviceCode.verification_url);
-        //        tokenResponse = await GoogleLogin.GetAccessToken(deviceCode);
-        //        _client.Settings.GoogleRefreshToken = tokenResponse?.refresh_token;
-        //        _client.AuthToken = tokenResponse?.id_token;
-        //    }
+                GoogleDeviceCodeEvent?.Invoke(deviceCode.user_code, deviceCode.verification_url);
+                tokenResponse = await GoogleLogin.GetAccessToken(deviceCode);
+                _client.Settings.GoogleRefreshToken = tokenResponse?.refresh_token;
+                _client.AuthToken = tokenResponse?.id_token;
+            }
 
-        //    await SetServer();
-        //    */
-        //}
+            await SetServer();
+            */
+        }
 
         public async Task DoPtcLogin(string username, string password)
         {

@@ -1,4 +1,4 @@
-﻿using Google.Protobuf;
+﻿﻿using Google.Protobuf;
 using PokemonGo.RocketAPI.Enums;
 using POGOProtos.Networking.Envelopes;
 using POGOProtos.Networking.Requests;

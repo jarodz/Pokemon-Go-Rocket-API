@@ -13,6 +13,7 @@ namespace PokemonGo.RocketAPI.Extensions
             string url, RequestEnvelope requestEnvelope) where TRequest : IMessage<TRequest>
             where TResponsePayload : IMessage<TResponsePayload>, new()
         {
+
             
             var response = await PostProto<TRequest>(client, url, requestEnvelope);
 
@@ -44,10 +45,6 @@ namespace PokemonGo.RocketAPI.Extensions
             var codedStream = new CodedInputStream(responseData);
             var decodedResponse = new ResponseEnvelope();
             decodedResponse.MergeFrom(codedStream);
-            if (decodedResponse.Returns.Count == 0)
-            {
-                Logger.Write(responseData.ToString());
-            }
             return decodedResponse;
         }
     }

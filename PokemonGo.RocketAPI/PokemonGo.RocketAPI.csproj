@@ -35,7 +35,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Google.Protobuf, Version=3.0.0.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Protobuf.3.0.0-beta3\lib\dotnet\Google.Protobuf.dll</HintPath>
+      <HintPath>..\packages\Google.Protobuf.3.0.0-beta4\lib\net45\Google.Protobuf.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="GPSOAuthSharp, Version=0.0.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\GPSOAuthSharp.0.0.5\lib\GPSOAuthSharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Practices.EnterpriseLibrary.TransientFaultHandling, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -77,6 +81,9 @@
   <ItemGroup>
     <Compile Include="Enums\AuthType.cs" />
     <Compile Include="Exceptions\AccessTokenExpiredException.cs" />
+    <Compile Include="Exceptions\AccountNotVerifiedException.cs" />
+    <Compile Include="Exceptions\GoogleException.cs" />
+    <Compile Include="Exceptions\GoogleOfflineException.cs" />
     <Compile Include="Exceptions\InvalidResponseException.cs" />
     <Compile Include="Exceptions\PtcOfflineException.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />
@@ -92,6 +99,7 @@
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Login\GoogleLogin.cs" />
+    <Compile Include="Login\GoogleLoginGPSOAuth.cs" />
     <Compile Include="Login\PtcLogin.cs" />
     <Compile Include="POGOProtos\Data\AssetDigestEntry.cs" />
     <Compile Include="POGOProtos\Data\Battle\BattleAction.cs" />
@@ -328,7 +336,7 @@
     <Compile Include="Helpers\RandomHelper.cs" />
     <Compile Include="Helpers\RequestBuilder.cs" />
     <Compile Include="Resources.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="app.config" />
     <None Include="Proto\AllEnum.proto" />
     <None Include="Proto\Payloads.proto" />
     <None Include="Proto\Request.proto" />
@@ -337,7 +345,9 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
-﻿namespace PokemonGo.RocketAPI.Enums
+namespace PokemonGo.RocketAPI.Exceptions
 {
-    public enum AuthType
+    public class GoogleOfflineException : Exception
     {
-        Google,
-        Ptc
     }
 }

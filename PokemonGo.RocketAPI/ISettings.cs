@@ -3,6 +3,7 @@ using POGOProtos.Inventory.Item;
 using PokemonGo.RocketAPI.Enums;
 using System.Collections.Generic;
 
+
 namespace PokemonGo.RocketAPI
 {
     public interface ISettings
