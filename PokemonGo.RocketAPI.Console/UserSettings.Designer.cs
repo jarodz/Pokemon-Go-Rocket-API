@@ -25,37 +25,13 @@ namespace PokemonGo.RocketAPI.Console {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Google")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Ptc")]
         public string AuthType {
             get {
                 return ((string)(this["AuthType"]));
             }
             set {
                 this["AuthType"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("username")]
-        public string PtcUsername {
-            get {
-                return ((string)(this["PtcUsername"]));
-            }
-            set {
-                this["PtcUsername"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("pw")]
-        public string PtcPassword {
-            get {
-                return ((string)(this["PtcPassword"]));
-            }
-            set {
-                this["PtcPassword"] = value;
             }
         }
         
@@ -73,7 +49,7 @@ namespace PokemonGo.RocketAPI.Console {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("52.379189")]
+        [global::System.Configuration.DefaultSettingValueAttribute("52.357582")]
         public double DefaultLatitude {
             get {
                 return ((double)(this["DefaultLatitude"]));
@@ -85,13 +61,73 @@ namespace PokemonGo.RocketAPI.Console {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("4.899431")]
+        [global::System.Configuration.DefaultSettingValueAttribute("4.87191")]
         public double DefaultLongitude {
             get {
                 return ((double)(this["DefaultLongitude"]));
             }
             set {
                 this["DefaultLongitude"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("username")]
+        public string PtcUsername {
+            get {
+                return ((string)(this["PtcUsername"]));
+            }
+            set {
+                this["PtcUsername"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("password")]
+        public string PtcPassword {
+            get {
+                return ((string)(this["PtcPassword"]));
+            }
+            set {
+                this["PtcPassword"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string GoogleUsername {
+            get {
+                return ((string)(this["GoogleUsername"]));
+            }
+            set {
+                this["GoogleUsername"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string GooglePassword {
+            get {
+                return ((string)(this["GooglePassword"]));
+            }
+            set {
+                this["GooglePassword"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("-2")]
+        public double DefaultAltitude {
+            get {
+                return ((double)(this["DefaultAltitude"]));
+            }
+            set {
+                this["DefaultAltitude"] = value;
             }
         }
     }

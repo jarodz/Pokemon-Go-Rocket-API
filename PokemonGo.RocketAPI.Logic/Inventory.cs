@@ -1,70 +1,141 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AllEnum;
-using PokemonGo.RocketAPI.GeneratedCode;
+
+using POGOProtos.Inventory.Item;
+using POGOProtos.Data;
+using POGOProtos.Enums;
+using POGOProtos.Settings.Master;
+using System;
+using POGOProtos.Networking.Responses;
+using POGOProtos.Inventory;
+using static POGOProtos.Networking.Responses.DownloadItemTemplatesResponse.Types;
 
 namespace PokemonGo.RocketAPI.Logic
 {
     public class Inventory
     {
         private readonly Client _client;
+        private List<InventoryItem> _inventoryItems;
+        private List<PokemonSettings> _pokemonSettings;
 
         public Inventory(Client client)
         {
             _client = client;
+            _inventoryItems = new List<InventoryItem>();
+            _pokemonSettings = new List<PokemonSettings>();
+            //Task.Run(() => Initialize());
         }
         
-        public async Task<IEnumerable<PokemonData>> GetPokemons()
+        public async Task Initialize()
         {
-            var inventory = await _client.GetInventory();
-            return
-                inventory.InventoryDelta.InventoryItems.Select(i => i.InventoryItemData?.Pokemon)
-                    .Where(p => p != null && p?.PokemonId > 0);
-        }
-        
-        public async Task<IEnumerable<PokemonFamily>> GetPokemonFamilies()
-        {
-            var inventory = await _client.GetInventory();
-            return
-                inventory.InventoryDelta.InventoryItems.Select(i => i.InventoryItemData?.PokemonFamily)
-                    .Where(p => p != null && p?.FamilyId != PokemonFamilyId.FamilyUnset);
+            var inventoryItems = await _client.Inventory.GetInventory();
+            foreach (InventoryItem item in inventoryItems.InventoryDelta.InventoryItems)
+            {
+                _inventoryItems.Add(item);
+            }
+
+            DownloadItemTemplatesResponse downloadItemTemplatesResponse = await _client.Download.GetItemTemplates();
+            foreach (ItemTemplate itemTemplate in downloadItemTemplatesResponse.ItemTemplates)
+            {
+                if (itemTemplate.PokemonSettings != null)
+                {
+
+                    _pokemonSettings.Add(itemTemplate.PokemonSettings);
+                }
+            }
         }
 
-        public async Task<IEnumerable<PokemonSettings>> GetPokemonSettings()
+        public IEnumerable<PokemonData> GetPokemons()
         {
-            var templates = await _client.GetItemTemplates();
+            //var inventory = await _client.Inventory.GetInventory();
             return
-                templates.ItemTemplates.Select(i => i.PokemonSettings)
-                    .Where(p => p != null && p?.FamilyId != PokemonFamilyId.FamilyUnset);
-        } 
+                _inventoryItems.Select(i => i.InventoryItemData?.PokemonData)
+                    .Where(p => p != null && p.PokemonId != PokemonId.Missingno);
+        }
+
+        public PokemonFamilyId getPokemonFamilyIdForPokemon(PokemonId pokemonId)
+        {
+            //PokemonId pokemonId = (PokemonId)Enum.Parse(typeof(PokemonId), pokemonIdString, true);
+            var pokemonFamilies = Enum.GetValues(typeof(PokemonFamilyId));
+            int result = -1;
+            foreach (PokemonFamilyId familyId in pokemonFamilies)
+            {
+                if ((int)(familyId) <= (int)pokemonId)
+                {
+                    result = (int)familyId;
+                }
+            }
+
+            return (PokemonFamilyId)result;
+        }
+
+        public Candy getCandyItemForPokemonFamilyId(PokemonFamilyId pokemonFamilyId)
+        {
+            Candy[] candyInventoryItems = _inventoryItems.Select(i => (i.InventoryItemData.Candy)).Where(i => i != null).ToArray();
+
+            foreach (Candy candyItem in candyInventoryItems)
+            {
+                if (candyItem.FamilyId == pokemonFamilyId)
+                {
+                    return candyItem;
+                }
+            }
+
+            return null;
+        }
+
+        public int getCandyAmountForPokemonFamily(PokemonFamilyId pokemonFamilyId)
+        {
+            Candy candyItemForFamily = getCandyItemForPokemonFamilyId(pokemonFamilyId);
+            if (candyItemForFamily != null)
+            {
+                return candyItemForFamily.Candy_;
+            }
+            return 0;
+        }
+
+        public int getCandyAmountForPokemon(PokemonData pokemon)
+        {
+            PokemonFamilyId familyId = getPokemonFamilyIdForPokemon(pokemon.PokemonId);
+            return getCandyAmountForPokemonFamily(familyId);
+        }
+
+
+        //public async Task<IEnumerable<PokemonSettings>> GetPokemonSettings()
+        //{
+        //    var templates = await _client.Download.GetItemTemplates();
+        //    return
+        //        templates.ItemTemplates.Select(i => i.PokemonSettings)
+        //            .Where(p => p != null && p?.FamilyId != PokemonFamilyId.FamilyUnset);
+        //} 
 
 
         public async Task<IEnumerable<PokemonData>> GetDuplicatePokemonToTransfer(bool keepPokemonsThatCanEvolve = false)
         {
-            var myPokemon = await GetPokemons();
+            var myPokemon = GetPokemons();
 
             var pokemonList = myPokemon as IList<PokemonData> ?? myPokemon.ToList();
+            var inventory = _inventoryItems;
+
             if (keepPokemonsThatCanEvolve)
             {
                 var results = new List<PokemonData>();
                 var pokemonsThatCanBeTransfered = pokemonList.GroupBy(p => p.PokemonId)
                     .Where(x => x.Count() > 1).ToList();
 
-                var myPokemonSettings = await GetPokemonSettings();
-                var pokemonSettings = myPokemonSettings.ToList();
-
-                var myPokemonFamilies = await GetPokemonFamilies();
-                var pokemonFamilies = myPokemonFamilies.ToArray();
+                //var myPokemonFamilies = await GetPokemonFamilies();
+                //var pokemonFamilies = myPokemonFamilies.ToArray();
 
                 foreach (var pokemon in pokemonsThatCanBeTransfered)
                 {
-                    var settings = pokemonSettings.Single(x => x.PokemonId == pokemon.Key);
-                    var familyCandy = pokemonFamilies.Single(x => settings.FamilyId == x.FamilyId);
+                    var settings = _pokemonSettings.Single(x => x.PokemonId == pokemon.Key);
+                    int familyCandy = getCandyAmountForPokemon(pokemon.First());
                     if (settings.CandyToEvolve == 0)
                         continue;
 
-                    var amountToSkip = (familyCandy.Candy + settings.CandyToEvolve - 1)/settings.CandyToEvolve;
+   
+                    var amountToSkip = (familyCandy + settings.CandyToEvolve - 1) / settings.CandyToEvolve;
 
                     results.AddRange(pokemonList.Where(x => x.PokemonId == pokemon.Key && x.Favorite == 0)
                         .OrderByDescending(x => x.Cp)
@@ -76,7 +147,7 @@ namespace PokemonGo.RocketAPI.Logic
 
                 return results;
             }
-            
+
             return pokemonList
                 .GroupBy(p => p.PokemonId)
                 .Where(x => x.Count() > 1)
@@ -84,58 +155,134 @@ namespace PokemonGo.RocketAPI.Logic
         }
 
 
-        public async Task<IEnumerable<PokemonData>> GetPokemonToEvolve()
+        public IEnumerable<PokemonData> GetPokemonToEvolve()
         {
-            var myPokemons = await GetPokemons();
+            var myPokemons = GetPokemons();
             var pokemons = myPokemons.ToList();
 
-            var myPokemonSettings = await GetPokemonSettings();
-            var pokemonSettings = myPokemonSettings.ToList();
+            var inventory = _inventoryItems;
 
-            var myPokemonFamilies = await GetPokemonFamilies();
-            var pokemonFamilies = myPokemonFamilies.ToArray();
-            
             var pokemonToEvolve = new List<PokemonData>();
             foreach (var pokemon in pokemons)
             {
-                var settings = pokemonSettings.Single(x => x.PokemonId == pokemon.PokemonId);
-                var familyCandy = pokemonFamilies.Single(x => settings.FamilyId == x.FamilyId);
+                var settings = _pokemonSettings.Single(x => x.PokemonId == pokemon.PokemonId);
+                var familyCandy = getCandyAmountForPokemon(pokemon);
 
                 //Don't evolve if we can't evolve it
                 if (settings.EvolutionIds.Count == 0)
                     continue;
 
-                var pokemonCandyNeededAlready = pokemonToEvolve.Count(p => pokemonSettings.Single(x => x.PokemonId == p.PokemonId).FamilyId == settings.FamilyId) * settings.CandyToEvolve;
-                if (familyCandy.Candy - pokemonCandyNeededAlready > settings.CandyToEvolve)
+                var pokemonCandyNeededAlready = pokemonToEvolve.Count(p => _pokemonSettings.Single(x => x.PokemonId == p.PokemonId).FamilyId == settings.FamilyId) * settings.CandyToEvolve;
+                if (familyCandy - pokemonCandyNeededAlready > settings.CandyToEvolve)
+                {
+                    IncreaseCandyAmountForPokemonId(pokemon.PokemonId, -settings.CandyToEvolve);
                     pokemonToEvolve.Add(pokemon);
+                }
+
             }
 
             return pokemonToEvolve;
         }
-        
 
-
-        public async Task<IEnumerable<Item>> GetItems()
+        public IEnumerable<ItemData> GetItems()
         {
-            var inventory = await _client.GetInventory();
-            return inventory.InventoryDelta.InventoryItems
-                .Select(i => i.InventoryItemData?.Item)
-                .Where(p => p != null);
+            var inventory = _inventoryItems;
+            return inventory.Select(i => i.InventoryItemData?.Item).Where(p => p != null);
         }
 
-        public async Task<int> GetItemAmountByType(MiscEnums.Item type)
+        public int GetItemAmountByType(ItemId type)
         {
-            var pokeballs = await GetItems();
-            return pokeballs.FirstOrDefault(i => (MiscEnums.Item)i.Item_ == type)?.Count ?? 0;
+            var items = _inventoryItems;
+            foreach (InventoryItem item in items)
+            {
+                if (item.InventoryItemData.Item != null && item.InventoryItemData.Item.ItemId == type)
+                {
+                    return item.InventoryItemData.Item.Count;
+                }
+            }
+
+            return 0;
         }
 
-        public async Task<IEnumerable<Item>> GetItemsToRecycle(ISettings settings)
+        public ItemData GetItemDataByItemId(ItemId itemId)
         {
-            var myItems = await GetItems();
+            return _inventoryItems.Select(i => i.InventoryItemData)
+                .Where(i => i.Item != null).Select(it => it.Item).Where(it => it.ItemId == itemId).FirstOrDefault();
+        }
 
-            return myItems
-                .Where(x => settings.itemRecycleFilter.Any(f => f.Key == ((ItemId)x.Item_) && x.Count > f.Value))
-                .Select(x => new Item { Item_ = x.Item_, Count = x.Count - settings.itemRecycleFilter.Single(f => f.Key == (AllEnum.ItemId)x.Item_).Value, Unseen = x.Unseen });
+        public Boolean SetItemIdCount(ItemId itemId, int newCount)
+        {
+            ItemData itemData = GetItemDataByItemId(itemId);
+            if (itemData == null)
+            {
+                return false;
+            }
+            itemData.Count = newCount;
+
+            return true;
+        }
+
+        public void AddPokemonToInventory(PokemonData pokemonData)
+        {
+            InventoryItem pokemonInventoryItem = new InventoryItem
+            {
+                InventoryItemData = new InventoryItemData
+                {
+                    PokemonData = pokemonData
+                }
+            };
+
+            _inventoryItems.Add(pokemonInventoryItem);
+        }
+
+        public void RemovePokemonFromInventory(PokemonData pokemonData)
+        {
+            InventoryItem pokemonInventoryItem = _inventoryItems.Select(i => i).Where(i => i.InventoryItemData.PokemonData != null && i.InventoryItemData.PokemonData == pokemonData).First();
+            _inventoryItems.Remove(pokemonInventoryItem);
+        }
+
+        public bool IncreaseItemAmountInInventory(ItemId itemId, int amount)
+        {
+            ItemData itemData = GetItemDataByItemId(itemId);
+            if (itemData == null)
+            {
+                return false;
+            }
+            itemData.Count += amount;
+
+            return true;
+        }
+
+        public bool IncreaseCandyAmountForPokemonId(PokemonId pokemonId, int amount)
+        {
+            PokemonFamilyId pokemonFamilyId = getPokemonFamilyIdForPokemon(pokemonId);
+            Candy candyItemForFamily = getCandyItemForPokemonFamilyId(pokemonFamilyId);
+            if (candyItemForFamily != null)
+            {
+                candyItemForFamily.Candy_ += amount;
+                return true;
+            }
+
+            return false;
+        }
+
+        public List<ItemData> GetItemsToRecycle(ISettings settings)
+        {
+            List<ItemData> result = new List<ItemData>();
+
+            foreach (KeyValuePair<ItemId, int> recycleFilterItem in settings.itemRecycleFilter)
+            {
+                int itemAmountForType = GetItemAmountByType(recycleFilterItem.Key);
+                if (itemAmountForType > recycleFilterItem.Value)
+                {
+                    result.Add(new ItemData
+                    {
+                        ItemId = recycleFilterItem.Key,
+                        Count = itemAmountForType - recycleFilterItem.Value
+                    });
+                }
+            }
+            return result;
         }
     }
 }

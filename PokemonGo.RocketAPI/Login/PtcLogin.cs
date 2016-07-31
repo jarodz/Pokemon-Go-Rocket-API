@@ -21,7 +21,7 @@ namespace PokemonGo.RocketAPI.Login
                 AllowAutoRedirect = false
             };
 
-            using (var tempHttpClient = new HttpClient(handler))
+            using (var tempHttpClient = new System.Net.Http.HttpClient(new RetryHandler(handler)))
             {
                 //Get session cookie
                 var sessionResp = await tempHttpClient.GetAsync(Resources.PtcLoginUrl);
