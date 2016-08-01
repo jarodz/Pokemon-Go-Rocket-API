@@ -22,13 +22,14 @@ namespace PokemonGo.RocketAPI.Logic
         public Inventory(Client client)
         {
             _client = client;
-            _inventoryItems = new List<InventoryItem>();
-            _pokemonSettings = new List<PokemonSettings>();
+           
             //Task.Run(() => Initialize());
         }
         
         public async Task Initialize()
         {
+            _inventoryItems = new List<InventoryItem>();
+            _pokemonSettings = new List<PokemonSettings>();
             var inventoryItems = await _client.Inventory.GetInventory();
             foreach (InventoryItem item in inventoryItems.InventoryDelta.InventoryItems)
             {
@@ -111,7 +112,7 @@ namespace PokemonGo.RocketAPI.Logic
         //} 
 
 
-        public async Task<IEnumerable<PokemonData>> GetDuplicatePokemonToTransfer(bool keepPokemonsThatCanEvolve = false)
+        public IEnumerable<PokemonData> GetDuplicatePokemonToTransfer(bool keepPokemonsThatCanEvolve = false)
         {
             var myPokemon = GetPokemons();
 
@@ -129,7 +130,7 @@ namespace PokemonGo.RocketAPI.Logic
 
                 foreach (var pokemon in pokemonsThatCanBeTransfered)
                 {
-                    var settings = _pokemonSettings.Single(x => x.PokemonId == pokemon.Key);
+                    var settings = _pokemonSettings.Single(x => x.PokemonId == pokemon.First().PokemonId);
                     int familyCandy = getCandyAmountForPokemon(pokemon.First());
                     if (settings.CandyToEvolve == 0)
                         continue;
@@ -137,7 +138,7 @@ namespace PokemonGo.RocketAPI.Logic
    
                     var amountToSkip = (familyCandy + settings.CandyToEvolve - 1) / settings.CandyToEvolve;
 
-                    results.AddRange(pokemonList.Where(x => x.PokemonId == pokemon.Key && x.Favorite == 0)
+                    results.AddRange(pokemonList.Where(x => x.PokemonId == pokemon.First().PokemonId && x.Favorite == 0)
                         .OrderByDescending(x => x.Cp)
                         .ThenBy(n => n.StaminaMax)
                         .Skip(amountToSkip)
