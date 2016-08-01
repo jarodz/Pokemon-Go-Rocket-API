@@ -66,6 +66,7 @@ namespace PokemonGo.RocketAPI.Logic
         public async Task PostLoginExecute()
         {
             await Task.Delay(1500);
+            
             await _inventory.Initialize(); // Get the inventory, use it locally henceforth
             while (true)
             {
@@ -118,7 +119,7 @@ namespace PokemonGo.RocketAPI.Logic
         private void UpdateItemCountFromFortSearch(FortSearchResponse fortSearch)
         {
             foreach (ItemAward awardedItem in fortSearch.ItemsAwarded) {
-                _inventory.SetItemIdCount(awardedItem.ItemId, awardedItem.ItemCount);
+                _inventory.IncreaseItemAmountInInventory(awardedItem.ItemId, awardedItem.ItemCount);
             }
         }
 
@@ -165,18 +166,20 @@ namespace PokemonGo.RocketAPI.Logic
                 Logger.Write($"Throwing {pokeballItemId}", LogLevel.Info);
                 _inventory.IncreaseItemAmountInInventory(pokeballItemId, -1);
                 caughtPokemonResponse = await _client.Encounter.CatchPokemon(pokemon.EncounterId, pokemon.SpawnPointId, pokeballItemId);
-                Logger.Write(
-                    caughtPokemonResponse.Status == CatchPokemonResponse.Types.CatchStatus.CatchSuccess ? 
-                    $"Caught {pokemon.PokemonId} [CP {encounter?.WildPokemon?.PokemonData?.Cp}] using {pokeballItemId}" :
-                    $"{pokemon.PokemonId} [CP {encounter?.WildPokemon?.PokemonData?.Cp}] got away while using {pokeballItemId}..", LogLevel.Info
-                );
+ 
                 if (caughtPokemonResponse.Status == CatchPokemonResponse.Types.CatchStatus.CatchSuccess)
                 {
                     _inventory.AddPokemonToInventory(encounter.WildPokemon.PokemonData);
+                    Logger.Write($"Caught {pokemon.PokemonId} [CP {encounter?.WildPokemon?.PokemonData?.Cp}] using {pokeballItemId}");
                 }
                 await Task.Delay(2000);
             }
             while (caughtPokemonResponse.Status == CatchPokemonResponse.Types.CatchStatus.CatchMissed);
+
+            if (caughtPokemonResponse.Status != CatchPokemonResponse.Types.CatchStatus.CatchSuccess)
+            {
+                Logger.Write($"{pokemon.PokemonId} [CP {encounter?.WildPokemon?.PokemonData?.Cp}] got away while using {pokeballItemId}..", LogLevel.Info);
+            }
         }
         
         private async Task EvolveAllPokemonWithEnoughCandy()
