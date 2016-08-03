@@ -55,9 +55,14 @@ namespace PokemonGo.RocketAPI.Logic
                 {
                     Logger.Write("PTC seems to be offline", LogLevel.Info);
                 }
+                catch (InvalidResponseException e)
+                {
+                    Logger.Write("Invalid response exception: " + e.Message);
+                }
                 catch (Exception e)
                 {
-                    Logger.Write("Unhandled exception: " + e.Message);
+                    Logger.Write(e.Message);
+                    Logger.Write(e.StackTrace);                    
                 }
                 await Task.Delay(10000);
             }
@@ -66,16 +71,25 @@ namespace PokemonGo.RocketAPI.Logic
         public async Task PostLoginExecute()
         {
             await Task.Delay(1500);
+            try {
+                await _inventory.Initialize(); // Get the inventory, use it locally henceforth
+            } catch (InvalidResponseException)
+            {
+                throw;
+            }
             
-            await _inventory.Initialize(); // Get the inventory, use it locally henceforth
             while (true)
             {
                 try
                 {
-                    await EvolveAllPokemonWithEnoughCandy();
-                    await TransferDuplicatePokemon(true);
-                    await RecycleItems();
+                    //await TransferDuplicatePokemon(true);
+                    //await EvolveAllPokemonWithEnoughCandy();
+                    //await RecycleItems();
                     await ExecuteFarmingPokestopsAndPokemons();
+                }
+                catch (InvalidResponseException)
+                {
+                    throw;
                 }
                 catch (AccessTokenExpiredException)
                 {
@@ -84,7 +98,7 @@ namespace PokemonGo.RocketAPI.Logic
                 catch (Exception ex)
                 {
                     Logger.Write($"Exception: {ex}", LogLevel.Error);
-                }
+                } 
 
                 await Task.Delay(10000);
             }
@@ -108,11 +122,12 @@ namespace PokemonGo.RocketAPI.Logic
                 //var fortInfo = await client.GetFort(pokeStop.Id, pokeStop.Latitude, pokeStop.Longitude);
                 var fortSearch = await _client.Fort.SearchFort(pokeStop.Id, pokeStop.Latitude, pokeStop.Longitude);
                 UpdateItemCountFromFortSearch(fortSearch);
-                Logger.Write($"PokeStop xp: {fortSearch.ExperienceAwarded}, gems: { fortSearch.GemsAwarded}, items: {StringUtils.GetSummedFriendlyNameOfItemAwardList(fortSearch.ItemsAwarded)}", LogLevel.Info);
-                await Task.Delay(15000);
+                Logger.Write($"PokeStop xp: {fortSearch.ExperienceAwarded}, items: {StringUtils.GetSummedFriendlyNameOfItemAwardList(fortSearch.ItemsAwarded)}", LogLevel.Info);
+                await Task.Delay(10000);
                 await RecycleItems();
                 await ExecuteCatchAllNearbyPokemons();
                 await TransferDuplicatePokemon(true);
+                await EvolveAllPokemonWithEnoughCandy();
             }
         }
 
@@ -135,22 +150,30 @@ namespace PokemonGo.RocketAPI.Logic
 
                 var encounter = await _client.Encounter.EncounterPokemon(pokemon.EncounterId, pokemon.SpawnPointId);
                 await CatchEncounter(encounter, pokemon);
-                await Task.Delay(15000);
+                await Task.Delay(10000);
             }
         }
 
         private string getPokemonEncounterString(EncounterResponse encounter)
         {
-            PokemonData pokemonData = encounter.WildPokemon.PokemonData;
-            return
+            PokemonData pokemonData = encounter?.WildPokemon?.PokemonData;
+            if (pokemonData != null)
+            {
+                return
                 "A wild " + pokemonData.PokemonId + " appeared! " +
                 "[CP " + pokemonData.Cp + ", att " + pokemonData.IndividualAttack +
                 ", def " + pokemonData.IndividualDefense +
                 ", stn " + pokemonData.IndividualStamina + "] - catch prob." + encounter.CaptureProbability.CaptureProbability_;
+            }
+            return encounter.Status.ToString();
         }
 
         private async Task CatchEncounter(EncounterResponse encounter, MapPokemon pokemon)
         {
+            if (encounter.Status != EncounterResponse.Types.Status.EncounterSuccess)
+            {
+                return;
+            }
             Logger.Write(getPokemonEncounterString(encounter), LogLevel.Info);
             CatchPokemonResponse caughtPokemonResponse;
             var pokeballItemId = GetBestBall(encounter);
@@ -172,13 +195,13 @@ namespace PokemonGo.RocketAPI.Logic
                     _inventory.AddPokemonToInventory(encounter.WildPokemon.PokemonData);
                     Logger.Write($"Caught {pokemon.PokemonId} [CP {encounter?.WildPokemon?.PokemonData?.Cp}] using {pokeballItemId}");
                 }
-                await Task.Delay(2000);
+                await Task.Delay(1500);
             }
             while (caughtPokemonResponse.Status == CatchPokemonResponse.Types.CatchStatus.CatchMissed);
 
             if (caughtPokemonResponse.Status != CatchPokemonResponse.Types.CatchStatus.CatchSuccess)
             {
-                Logger.Write($"{pokemon.PokemonId} [CP {encounter?.WildPokemon?.PokemonData?.Cp}] got away while using {pokeballItemId}..", LogLevel.Info);
+                Logger.Write($"{pokemon.PokemonId} [CP {encounter?.WildPokemon?.PokemonData?.Cp}] got away while using {pokeballItemId}.. {caughtPokemonResponse.Status}", LogLevel.Info);
             }
         }
         
@@ -206,7 +229,7 @@ namespace PokemonGo.RocketAPI.Logic
 
         private async Task TransferDuplicatePokemon(bool keepPokemonsThatCanEvolve = false)
         {
-            var duplicatePokemons = await _inventory.GetDuplicatePokemonToTransfer(keepPokemonsThatCanEvolve);
+            var duplicatePokemons = _inventory.GetDuplicatePokemonToTransfer(keepPokemonsThatCanEvolve);
 
             foreach (var duplicatePokemon in duplicatePokemons)
             {

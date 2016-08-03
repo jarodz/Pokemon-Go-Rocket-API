@@ -7,7 +7,7 @@ namespace PokemonGo.RocketAPI.Console
 {
     public class Settings : ISettings
 	{
-		public AuthType AuthType => AuthType.Ptc;
+		public AuthType AuthType => UserSettings.Default.AuthType.ToLower() == "ptc" ? AuthType.Ptc : AuthType.Google;
 		public string PtcUsername => UserSettings.Default.PtcUsername;
         public string PtcPassword => UserSettings.Default.PtcPassword;
         public double DefaultLatitude => UserSettings.Default.DefaultLatitude;

@@ -132,11 +132,17 @@ namespace PokemonGo.RocketAPI.Logic
                 {
                     var settings = _pokemonSettings.Single(x => x.PokemonId == pokemon.First().PokemonId);
                     int familyCandy = getCandyAmountForPokemon(pokemon.First());
-                    if (settings.CandyToEvolve == 0)
-                        continue;
 
-   
-                    var amountToSkip = (familyCandy + settings.CandyToEvolve - 1) / settings.CandyToEvolve;
+                    int amountToSkip;
+                    if (settings.CandyToEvolve == 0)
+                    {
+                        amountToSkip = 5; // Keeping n pokemon of the same type that cannot be evolved (i.e. max)
+                        //continue
+                    } else
+                    {
+                        amountToSkip = (familyCandy + settings.CandyToEvolve - 1) / settings.CandyToEvolve;
+                    }
+
 
                     results.AddRange(pokemonList.Where(x => x.PokemonId == pokemon.First().PokemonId && x.Favorite == 0)
                         .OrderByDescending(x => x.Cp)
